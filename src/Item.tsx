@@ -25,7 +25,8 @@ export default function GroceryItem(props: any) {
                 <button className="decrement" onClick={props.handleDecrement}>
                 <FontAwesomeIcon icon={faMinus} />
                 </button>
-                <span className='num-input'>{props.count}</span>
+                <input className='num-input' onChange={props.handleChange}
+                type="number" value={props.count}/>
                 <button className="increment" onClick={props.handleIncrement}>
                     <FontAwesomeIcon icon={faPlus} />
                 </button>

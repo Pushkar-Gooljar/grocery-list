@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
 import Item from './Item'
+import ActionBar from './ActionBar'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.css'
 
@@ -9,13 +10,13 @@ function App() {
 
   if (localStorage.getItem('groceries') == null) {
     localStorage.setItem('groceries', '[]')
-    console.log('set')
   }
   const [items, setItems] = useState(JSON.parse(localStorage.getItem('groceries')!))
   const [itemName, setName] = useState('')
 
   function handleChange(event: any, key?: number) {
     const { value, type } = event.target
+    console.log(type)
     if (type == 'select-one') {
       const newData = items.map((item: any) => {
         if (item.key == key) {
@@ -26,16 +27,23 @@ function App() {
       })
       setItems(newData)
       localStorage.setItem('groceries', JSON.stringify(newData))
-
-      console.log(key, value)
-      console.log(newData, items)
-    } else {
+    } else if (type == 'number') {
+        const newData = items.map((item: any) => {
+          if (item.key == key) {
+            return {...item, count: value != null ? parseInt(value) : 0}
+          } else {
+            return {...item}
+          }
+      })
+      setItems(newData)
+      localStorage.setItem('groceries', JSON.stringify(newData))
+    }
+    else {
       setName(value)
-      console.log('Value: ', value)
     }
   }
 
-  function handleclick() {
+  function addItem() {
     if (itemName.length > 0) {
 
       const newObject = {
@@ -52,7 +60,6 @@ function App() {
       ]
       setItems(newData)
       localStorage.setItem('groceries', JSON.stringify(newData))
-      console.log(items)
       setName('')      
     }
 
@@ -60,11 +67,11 @@ function App() {
 
   function enterEvent(event: any) {
     if (event.key == 'Enter') {
-      handleclick()
+      addItem()
     }
   }
 
-  function togglecheck(key: number) {
+  function toggleCheck(key: number) {
     const newData = items.map((item: any) => {
       if (item.key == key) {
         return {...item, selected: !item.selected}
@@ -77,7 +84,7 @@ function App() {
     localStorage.setItem('groceries', JSON.stringify(newData))
   }
 
-  function increment(key: number) {
+  function incrementItemCount(key: number) {
     const newData = items.map((item: any) => {
       if (item.key == key) {
         return {...item, count: item.count + 1}
@@ -90,7 +97,7 @@ function App() {
     localStorage.setItem('groceries', JSON.stringify(newData))
   }
 
-  function decrement(key: number) {
+  function decrementItemCount(key: number) {
     const newData = items.map((item: any) => {
       if (item.key == key && item.count > 0) {
         return {...item, count: item.count - 1}
@@ -103,7 +110,7 @@ function App() {
     localStorage.setItem('groceries', JSON.stringify(newData))
   }
 
-  function remove(key: number) {
+  function removeItem(key: number) {
     const msg = 'Are you sure you want to delete this item?'
     if (confirm(msg)) {
       const filtered = items.filter((data: any) => data.key != key);
@@ -112,7 +119,7 @@ function App() {
     }
   }
 
-  function clear() {
+  function clearItems() {
     if (confirm('Are you sure you want to delete all items?')) {
       setItems([])
       localStorage.setItem('groceries', '[]')
@@ -122,23 +129,30 @@ function App() {
   const display = items.map((item: any) => {
     return <Item key={item.key} name={item.name} 
     count={item.count} countType={item.countType} 
-    checked={item.selected} handleToggleCheck={() => togglecheck(item.key)}
-    handleIncrement={() => increment(item.key)}
-    handleDecrement={() => decrement(item.key)} handleChange={(e: any) => handleChange(e, item.key)} delete={() => remove(item.key)}/>
+    checked={item.selected} handleToggleCheck={() => toggleCheck(item.key)}
+    handleIncrement={() => incrementItemCount(item.key)}
+    handleDecrement={() => decrementItemCount(item.key)} handleChange={(e: any) => handleChange(e, item.key)} delete={() => removeItem(item.key)}/>
   })
 
-  const clearIsDisabled = items.length > 0 ? false : true
-  const clearBtnText = items.length > 0 ? `Clear (${items.length})` : 'Clear'
+
+  let checkedItems = 0
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].selected) {
+      checkedItems += 1
+    }
+  }
+
+  const bar = <ActionBar  onChange={handleChange}
+                          inputValue={itemName}
+                          onKeyPress={enterEvent}
+                          handleAddItem={addItem}
+                          handleClearItems={clearItems}
+                          totalItems={items.length}
+                          checkedItems={checkedItems} />
 
   return (
     <div className="app">
-        <div className="input-container">
-          <input type="text" className='form-control' placeholder='Add item' onChange={handleChange} value={itemName} onKeyPress={enterEvent}/>
-          <button className='btn btn-primary btn-disabled' onClick={handleclick}>
-            <FontAwesomeIcon icon={faPlus} />
-          </button>
-          <button className='btn btn-danger' id='clear' onClick={clear} disabled={clearIsDisabled}>{clearBtnText}</button>
-        </div>
+        {bar}
         <div className="items-container">
           { display }
       </div>
